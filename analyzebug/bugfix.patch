@@ -1,0 +1,112 @@
+diff --git a/models/campaign.go b/models/campaign.go
+index 3867122..2f17e7a 100644
+--- a/models/campaign.go
++++ b/models/campaign.go
+@@ -422,7 +422,7 @@ func GetCampaignResults(id int64, uid int64) (CampaignResults, error) {
+ 		log.Errorf("%s: results not found for campaign", err)
+ 		return cr, err
+ 	}
+-	err = db.Table("events").Where("campaign_id=?", cr.Id).Find(&cr.Events).Error
++	err = db.Table("events").Where("campaign_id=?", cr.Id).Order("time asc, id asc").Find(&cr.Events).Error
+ 	if err != nil {
+ 		log.Errorf("%s: events not found for campaign", err)
+ 		return cr, err
+diff --git a/models/campaign_test.go b/models/campaign_test.go
+index 6491987..4df4ae5 100644
+--- a/models/campaign_test.go
++++ b/models/campaign_test.go
+@@ -152,6 +152,46 @@ func (s *ModelsSuite) TestCampaignGetResults(c *check.C) {
+ 	c.Assert(len(campaign.Results), check.Equals, len(got.Results))
+ }
+ 
++func (s *ModelsSuite) TestGetCampaignResultsOrdersEvents(c *check.C) {
++	campaign := s.createCampaign(c)
++
++	err := db.Where("campaign_id=?", campaign.Id).Delete(&Event{}).Error
++	c.Assert(err, check.Equals, nil)
++
++	baseTime := time.Date(2026, time.January, 1, 12, 0, 0, 0, time.UTC)
++	events := []Event{
++		{
++			CampaignId: campaign.Id,
++			Email:      campaign.Results[0].Email,
++			Time:       baseTime.Add(2 * time.Hour),
++			Message:    EventClicked,
++		},
++		{
++			CampaignId: campaign.Id,
++			Email:      campaign.Results[0].Email,
++			Time:       baseTime,
++			Message:    EventSent,
++		},
++		{
++			CampaignId: campaign.Id,
++			Email:      campaign.Results[0].Email,
++			Time:       baseTime.Add(1 * time.Hour),
++			Message:    EventOpened,
++		},
++	}
++	for i := range events {
++		err = db.Save(&events[i]).Error
++		c.Assert(err, check.Equals, nil)
++	}
++
++	got, err := GetCampaignResults(campaign.Id, campaign.UserId)
++	c.Assert(err, check.Equals, nil)
++	c.Assert(len(got.Events), check.Equals, len(events))
++	c.Assert(got.Events[0].Message, check.Equals, EventSent)
++	c.Assert(got.Events[1].Message, check.Equals, EventOpened)
++	c.Assert(got.Events[2].Message, check.Equals, EventClicked)
++}
++
+ func setupCampaignDependencies(b *testing.B, size int) {
+ 	group := Group{Name: "Test Group"}
+ 	// Create a large group of 5000 members
+diff --git a/models/result.go b/models/result.go
+index 6ad5812..4b54cfb 100644
+--- a/models/result.go
++++ b/models/result.go
+@@ -47,7 +47,9 @@ func (r *Result) createEvent(status string, details interface{}) (*Event, error)
+ 		}
+ 		e.Details = string(dj)
+ 	}
+-	AddEvent(e, r.CampaignId)
++	if err := AddEvent(e, r.CampaignId); err != nil {
++		return nil, err
++	}
+ 	return e, nil
+ }
+ 
+diff --git a/models/result_test.go b/models/result_test.go
+index c003887..ba5b31b 100644
+--- a/models/result_test.go
++++ b/models/result_test.go
+@@ -75,6 +75,28 @@ func (s *ModelsSuite) TestResultVariableStatus(ch *check.C) {
+ 	}
+ }
+ 
++func (s *ModelsSuite) TestHandleEmailOpenedDoesNotUpdateResultWhenEventSaveFails(ch *check.C) {
++	campaign := s.createCampaign(ch)
++	result := campaign.Results[0]
++	originalStatus := result.Status
++	originalModifiedDate := result.ModifiedDate
++
++	err := db.Exec("ALTER TABLE events RENAME TO events_backup").Error
++	ch.Assert(err, check.Equals, nil)
++	defer func() {
++		restoreErr := db.Exec("ALTER TABLE events_backup RENAME TO events").Error
++		ch.Assert(restoreErr, check.Equals, nil)
++	}()
++
++	err = result.HandleEmailOpened(EventDetails{})
++	ch.Assert(err, check.NotNil)
++
++	freshResult, err := GetResult(result.RId)
++	ch.Assert(err, check.Equals, nil)
++	ch.Assert(freshResult.Status, check.Equals, originalStatus)
++	ch.Assert(freshResult.ModifiedDate, check.Equals, originalModifiedDate)
++}
++
+ func (s *ModelsSuite) TestDuplicateResults(ch *check.C) {
+ 	group := Group{Name: "Test Group"}
+ 	group.Targets = []Target{

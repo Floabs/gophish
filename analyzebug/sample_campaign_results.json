@@ -1,0 +1,108 @@
+{
+  "results": [
+    {
+      "id": 1,
+      "email": "alice@example.test",
+      "status": "Email Sent",
+      "reported": false
+    },
+    {
+      "id": 2,
+      "email": "bob@example.test",
+      "status": "Email Opened",
+      "reported": false
+    },
+    {
+      "id": 3,
+      "email": "carol@example.test",
+      "status": "Clicked Link",
+      "reported": false
+    },
+    {
+      "id": 4,
+      "email": "dave@example.test",
+      "status": "Submitted Data",
+      "reported": false
+    },
+    {
+      "id": 5,
+      "email": "erin@example.test",
+      "status": "Error",
+      "reported": false
+    },
+    {
+      "id": 6,
+      "email": "frank@example.test",
+      "status": "Clicked Link",
+      "reported": true
+    },
+    {
+      "id": 7,
+      "email": "grace@example.test",
+      "status": "Email Opened",
+      "reported": false
+    }
+  ],
+  "timeline": [
+    {
+      "email": "erin@example.test",
+      "message": "Error Sending Email",
+      "time": "2026-01-12T08:00:00Z"
+    },
+    {
+      "email": "frank@example.test",
+      "message": "Email Sent",
+      "time": "2026-01-12T08:15:00Z"
+    },
+    {
+      "email": "frank@example.test",
+      "message": "Clicked Link",
+      "time": "2026-01-12T09:30:00Z"
+    },
+    {
+      "email": "alice@example.test",
+      "message": "Email Sent",
+      "time": "2026-01-12T09:45:00Z"
+    },
+    {
+      "email": "bob@example.test",
+      "message": "Email Sent",
+      "time": "2026-01-12T09:50:00Z"
+    },
+    {
+      "email": "bob@example.test",
+      "message": "Email Opened",
+      "time": "2026-01-12T10:00:00Z"
+    },
+    {
+      "email": "carol@example.test",
+      "message": "Email Sent",
+      "time": "2026-01-12T10:10:00Z"
+    },
+    {
+      "email": "grace@example.test",
+      "message": "Email Sent",
+      "time": "2026-01-12T10:20:00Z"
+    },
+    {
+      "email": "dave@example.test",
+      "message": "Email Sent",
+      "time": "2026-01-12T10:40:00Z"
+    },
+    {
+      "email": "carol@example.test",
+      "message": "Clicked Link",
+      "time": "2026-01-12T14:00:00Z"
+    },
+    {
+      "email": "dave@example.test",
+      "message": "Submitted Data",
+      "time": "2026-01-12T16:00:00Z"
+    },
+    {
+      "email": "frank@example.test",
+      "message": "Email Reported",
+      "time": "2026-01-12T18:00:00Z"
+    }
+  ]
+}
