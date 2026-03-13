@@ -159,8 +159,8 @@
 {{end}} {{define "scripts"}}
 <script>
 window.campaignResultsMode = {{if .SampleMode}}"sample"{{else}}"campaign"{{end}};
-window.sampleCampaignResultsAPI = "/api/campaigns/dev/sample-results";
-window.sampleCampaignRangeStatsAPI = "/api/campaigns/dev/sample-range-stats";
+window.sampleCampaignResultsAPI = "/campaigns/dev/sample-results";
+window.sampleCampaignRangeStatsAPI = "/campaigns/dev/sample-range-stats";
 </script>
 <script src="/js/dist/app/campaign_results.min.js"></script>
 {{end}}
