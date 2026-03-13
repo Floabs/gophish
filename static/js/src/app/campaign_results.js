@@ -823,6 +823,15 @@ function readRangeControlState() {
     }
 }
 
+function applySelectedView(triggerFlash) {
+    var state = readRangeControlState()
+    if (state.source == "actual") {
+        applyHistoricalView(triggerFlash)
+        return
+    }
+    applyDashboardView()
+}
+
 function applyDashboardView() {
     rangeView.enabled = false
     rangeView.source = "dashboard"
@@ -913,12 +922,16 @@ function initializeRangeControls() {
     })
     $("#range_view_source").on("change", function () {
         syncRangeControls()
+        applySelectedView(false)
     })
     $("#range_view_mode").on("change", function () {
         syncRangeControls()
+        if ($("#range_view_source").val() == "actual") {
+            applyHistoricalView(false)
+        }
     })
     $("#range_apply").on("click", function () {
-        applyHistoricalView()
+        applySelectedView()
     })
     $("#range_reset").on("click", function () {
         $("#range_view_source").val("dashboard")
