@@ -29,7 +29,7 @@
             <button id="complete_button" type="button" class="btn btn-blue" data-toggle="tooltip" onclick="completeCampaign()">
                 <i class="fa fa-flag-checkered"></i> Complete
             </button>
-            <button type="button" class="btn btn-danger" data-toggle="tooltip" onclick="deleteCampaign()">
+            <button id="delete_button" type="button" class="btn btn-danger" data-toggle="tooltip" onclick="deleteCampaign()">
                 <i class="fa fa-trash-o fa-lg"></i> Delete
             </button>
             <button id="refresh_btn" type="button" class="btn btn-blue" data-toggle="tooltip" onclick="refresh()">
@@ -40,6 +40,13 @@
             </span>
         </div>
         <br />
+        <div id="sample_results_notice" class="row" style="display:none;">
+            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                <div class="alert alert-warning" style="margin-bottom: 15px;">
+                    Local sample mode. This page uses bundled synthetic results data and does not create, send, complete, delete, or report a real campaign.
+                </div>
+            </div>
+        </div>
         <div class="row">
             <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
                 <div class="panel panel-default">
@@ -146,9 +153,14 @@
                 </tbody>
             </table>
         </div>
-    </div>
-    <div id="flashes" class="row"></div>
+</div>
+<div id="flashes" class="row"></div>
 </div>
 {{end}} {{define "scripts"}}
+<script>
+window.campaignResultsMode = {{if .SampleMode}}"sample"{{else}}"campaign"{{end}};
+window.sampleCampaignResultsAPI = "/api/campaigns/dev/sample-results";
+window.sampleCampaignRangeStatsAPI = "/api/campaigns/dev/sample-range-stats";
+</script>
 <script src="/js/dist/app/campaign_results.min.js"></script>
 {{end}}

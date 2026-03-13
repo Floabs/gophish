@@ -10,6 +10,9 @@ It also includes a synthetic saved results export:
 That file is intentionally non-operational. It is only a local analysis fixture
 for the Python tool and for manually validating the historical stats semantics.
 
+On the demo branch, the same fixture is also available through a local
+read-only UI page at `/campaigns/dev/sample-results`.
+
 ## Verified Findings
 
 1. The dashboard counts are a final-status rollup, not a raw event count.

@@ -128,6 +128,7 @@ func (as *AdminServer) registerRoutes() {
 	router.HandleFunc("/logout", mid.Use(as.Logout, mid.RequireLogin))
 	router.HandleFunc("/reset_password", mid.Use(as.ResetPassword, mid.RequireLogin))
 	router.HandleFunc("/campaigns", mid.Use(as.Campaigns, mid.RequireLogin))
+	router.HandleFunc("/campaigns/dev/sample-results", mid.Use(as.CampaignSampleResults, mid.RequireLogin))
 	router.HandleFunc("/campaigns/{id:[0-9]+}", mid.Use(as.CampaignID, mid.RequireLogin))
 	router.HandleFunc("/templates", mid.Use(as.Templates, mid.RequireLogin))
 	router.HandleFunc("/groups", mid.Use(as.Groups, mid.RequireLogin))
@@ -179,6 +180,7 @@ type templateParams struct {
 	Token        string
 	Version      string
 	ModifySystem bool
+	SampleMode   bool
 }
 
 // newTemplateParams returns the default template parameters for a user and
@@ -214,6 +216,15 @@ func (as *AdminServer) Campaigns(w http.ResponseWriter, r *http.Request) {
 func (as *AdminServer) CampaignID(w http.ResponseWriter, r *http.Request) {
 	params := newTemplateParams(r)
 	params.Title = "Campaign Results"
+	getTemplate(w, "campaign_results").ExecuteTemplate(w, "base", params)
+}
+
+// CampaignSampleResults renders the bundled local sample results page so the
+// results UI can be tested without launching a campaign.
+func (as *AdminServer) CampaignSampleResults(w http.ResponseWriter, r *http.Request) {
+	params := newTemplateParams(r)
+	params.Title = "Campaign Results"
+	params.SampleMode = true
 	getTemplate(w, "campaign_results").ExecuteTemplate(w, "base", params)
 }
 

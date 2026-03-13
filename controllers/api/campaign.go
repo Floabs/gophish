@@ -2,7 +2,9 @@ package api
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -11,6 +13,11 @@ import (
 	"github.com/gophish/gophish/models"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
+)
+
+const (
+	sampleCampaignResultsName   = "Local Sample Campaign Results"
+	sampleCampaignResultsStatus = models.CampaignComplete
 )
 
 // Campaigns returns a list of campaigns if requested via GET.
@@ -134,6 +141,87 @@ func (as *Server) CampaignRangeStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	JSONResponse(w, stats, http.StatusOK)
+}
+
+// CampaignSampleResults returns the bundled local sample results fixture for
+// UI testing without creating a real campaign.
+func (as *Server) CampaignSampleResults(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		return
+	}
+	cr, err := loadSampleCampaignResults()
+	if err != nil {
+		JSONResponse(w, models.Response{Success: false, Message: err.Error()}, http.StatusInternalServerError)
+		return
+	}
+	JSONResponse(w, cr, http.StatusOK)
+}
+
+// CampaignSampleRangeStats returns historical stats for the bundled local
+// sample results fixture.
+func (as *Server) CampaignSampleRangeStats(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		return
+	}
+
+	start, err := parseRFC3339Pointer(r.URL.Query().Get("start"))
+	if err != nil {
+		JSONResponse(w, models.Response{Success: false, Message: "Invalid start date. Use RFC3339."}, http.StatusBadRequest)
+		return
+	}
+	end, err := parseRFC3339Pointer(r.URL.Query().Get("end"))
+	if err != nil {
+		JSONResponse(w, models.Response{Success: false, Message: "Invalid end date. Use RFC3339."}, http.StatusBadRequest)
+		return
+	}
+
+	cr, err := loadSampleCampaignResults()
+	if err != nil {
+		JSONResponse(w, models.Response{Success: false, Message: err.Error()}, http.StatusInternalServerError)
+		return
+	}
+
+	stats, err := models.BuildCampaignRangeStats(cr.Id, cr.Results, cr.Events, start, end, r.URL.Query().Get("mode"))
+	if err != nil {
+		switch err {
+		case models.ErrCampaignStatsInvalidMode, models.ErrCampaignStatsEndRequired, models.ErrCampaignStatsStartRequired, models.ErrCampaignStatsInvalidRange:
+			JSONResponse(w, models.Response{Success: false, Message: err.Error()}, http.StatusBadRequest)
+		default:
+			JSONResponse(w, models.Response{Success: false, Message: err.Error()}, http.StatusInternalServerError)
+		}
+		return
+	}
+	JSONResponse(w, stats, http.StatusOK)
+}
+
+func loadSampleCampaignResults() (models.CampaignResults, error) {
+	cr := models.CampaignResults{}
+	paths := []string{
+		filepath.Join("analyzebug", "sample_campaign_results.json"),
+		filepath.Join("..", "..", "analyzebug", "sample_campaign_results.json"),
+	}
+	var raw []byte
+	var err error
+	for _, path := range paths {
+		raw, err = ioutil.ReadFile(path)
+		if err == nil {
+			break
+		}
+	}
+	if err != nil {
+		return cr, err
+	}
+	if err = json.Unmarshal(raw, &cr); err != nil {
+		return cr, err
+	}
+	cr.Id = 0
+	if cr.Name == "" {
+		cr.Name = sampleCampaignResultsName
+	}
+	if cr.Status == "" {
+		cr.Status = sampleCampaignResultsStatus
+	}
+	return cr, nil
 }
 
 func parseRFC3339Pointer(raw string) (*time.Time, error) {

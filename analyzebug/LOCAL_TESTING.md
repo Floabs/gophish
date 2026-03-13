@@ -140,6 +140,22 @@ npx gulp scripts
 
 ## 4. Manual UI Test
 
+### Local Sample Page
+
+If you want to inspect the browser UI without creating or launching a real
+campaign, start Gophish locally and open:
+
+- `/campaigns/dev/sample-results`
+
+You can also use the `Open Sample Results` button on the Campaigns page.
+
+The sample page:
+
+- uses the bundled `sample_campaign_results.json`
+- is read-only
+- supports the new `Historical Analysis` controls
+- does not send email or write campaign data to the database
+
 1. Start Gophish locally with your usual workflow.
 2. Open a campaign results page.
 3. Verify the new `Historical Analysis` panel appears.

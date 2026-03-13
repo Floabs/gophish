@@ -162,3 +162,51 @@ func TestCampaignRangeStats(t *testing.T) {
 		t.Fatalf("unexpected dashboard opened count received. expected %d got %d", 2, response.Dashboard.OpenedEmail)
 	}
 }
+
+func TestCampaignSampleResults(t *testing.T) {
+	testCtx := setupTest(t)
+
+	r := httptest.NewRequest(http.MethodGet, "/api/campaigns/dev/sample-results", nil)
+	r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", testCtx.apiKey))
+	w := httptest.NewRecorder()
+
+	testCtx.apiServer.ServeHTTP(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("unexpected status code received. expected %d got %d", http.StatusOK, w.Code)
+	}
+	response := &models.CampaignResults{}
+	if err := json.NewDecoder(w.Body).Decode(response); err != nil {
+		t.Fatalf("error decoding response: %v", err)
+	}
+	if response.Name != sampleCampaignResultsName {
+		t.Fatalf("unexpected sample campaign name received. expected %s got %s", sampleCampaignResultsName, response.Name)
+	}
+	if len(response.Results) == 0 || len(response.Events) == 0 {
+		t.Fatalf("expected sample results and events to be present")
+	}
+}
+
+func TestCampaignSampleRangeStats(t *testing.T) {
+	testCtx := setupTest(t)
+
+	r := httptest.NewRequest(http.MethodGet, "/api/campaigns/dev/sample-range-stats?mode=snapshot&end=2026-01-12T12:00:00Z", nil)
+	r.Header.Set("Authorization", fmt.Sprintf("Bearer %s", testCtx.apiKey))
+	w := httptest.NewRecorder()
+
+	testCtx.apiServer.ServeHTTP(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("unexpected status code received. expected %d got %d", http.StatusOK, w.Code)
+	}
+	response := &models.CampaignRangeStats{}
+	if err := json.NewDecoder(w.Body).Decode(response); err != nil {
+		t.Fatalf("error decoding response: %v", err)
+	}
+	if response.Actual.OpenedEmail != 2 {
+		t.Fatalf("unexpected actual opened count received. expected %d got %d", 2, response.Actual.OpenedEmail)
+	}
+	if response.Dashboard.OpenedEmail != 5 {
+		t.Fatalf("unexpected dashboard opened count received. expected %d got %d", 5, response.Dashboard.OpenedEmail)
+	}
+}

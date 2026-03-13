@@ -63,6 +63,8 @@ func (as *Server) registerRoutes() {
 	router.HandleFunc("/reset", as.Reset)
 	router.HandleFunc("/campaigns/", as.Campaigns)
 	router.HandleFunc("/campaigns/summary", as.CampaignsSummary)
+	router.HandleFunc("/campaigns/dev/sample-results", as.CampaignSampleResults)
+	router.HandleFunc("/campaigns/dev/sample-range-stats", as.CampaignSampleRangeStats)
 	router.HandleFunc("/campaigns/{id:[0-9]+}", as.Campaign)
 	router.HandleFunc("/campaigns/{id:[0-9]+}/results", as.CampaignResults)
 	router.HandleFunc("/campaigns/{id:[0-9]+}/range-stats", as.CampaignRangeStats)

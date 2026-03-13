@@ -38,6 +38,16 @@ type campaignEventState struct {
 // GetCampaignRangeStats returns the current dashboard rollup and the
 // event-derived stats for a requested historical window.
 func GetCampaignRangeStats(id int64, uid int64, start, end *time.Time, mode string) (CampaignRangeStats, error) {
+	cr, err := GetCampaignResults(id, uid)
+	if err != nil {
+		return CampaignRangeStats{}, err
+	}
+	return BuildCampaignRangeStats(id, cr.Results, cr.Events, start, end, mode)
+}
+
+// BuildCampaignRangeStats returns dashboard and event-derived stats using the
+// supplied results and events instead of loading them from the database.
+func BuildCampaignRangeStats(id int64, results []Result, events []Event, start, end *time.Time, mode string) (CampaignRangeStats, error) {
 	stats := CampaignRangeStats{}
 	mode = normalizeCampaignStatsMode(mode)
 	if mode == "" {
@@ -61,17 +71,12 @@ func GetCampaignRangeStats(id int64, uid int64, start, end *time.Time, mode stri
 		return stats, ErrCampaignStatsInvalidRange
 	}
 
-	cr, err := GetCampaignResults(id, uid)
-	if err != nil {
-		return stats, err
-	}
-
 	stats.CampaignID = id
 	stats.Mode = mode
 	stats.StartDate = startUTC
 	stats.EndDate = endUTC
-	stats.Dashboard = summarizeCampaignResults(cr.Results)
-	stats.Actual = summarizeCampaignEvents(cr.Results, cr.Events, startUTC, endUTC, mode)
+	stats.Dashboard = summarizeCampaignResults(results)
+	stats.Actual = summarizeCampaignEvents(results, events, startUTC, endUTC, mode)
 	return stats, nil
 }
 

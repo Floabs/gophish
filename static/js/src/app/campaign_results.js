@@ -124,6 +124,52 @@ var rangeView = {
     end: null
 }
 
+function isSampleMode() {
+    return window.campaignResultsMode === "sample"
+}
+
+function fetchCampaignResults() {
+    if (isSampleMode()) {
+        return api.campaignSample.results()
+    }
+    return api.campaignId.results(campaign.id)
+}
+
+function fetchCampaignRangeStats(params) {
+    if (isSampleMode()) {
+        return api.campaignSample.rangeStats(params)
+    }
+    return api.campaignId.rangeStats(campaign.id, params)
+}
+
+function normalizeCampaignResponse(c) {
+    if (!isSampleMode()) {
+        return c
+    }
+    c.id = c.id || "sample"
+    c.name = c.name || "Local Sample Campaign Results"
+    c.status = c.status || "Completed"
+    if ((!c.launch_date || isZeroCampaignDate(c.launch_date)) && c.timeline && c.timeline.length > 0) {
+        c.launch_date = c.timeline[0].time
+    }
+    if ((!c.completed_date || isZeroCampaignDate(c.completed_date)) && c.timeline && c.timeline.length > 0) {
+        c.completed_date = c.timeline[c.timeline.length - 1].time
+    }
+    return c
+}
+
+function configureSampleModeUI() {
+    if (!isSampleMode()) {
+        return
+    }
+    doPoll = false
+    $("#sample_results_notice").show()
+    $("#complete_button").hide()
+    $("#delete_button").hide()
+    $("#refresh_btn").hide()
+    $("#refresh_message").hide()
+}
+
 function dismiss() {
     $("#modal\\.flashes").empty()
     $("#modal").modal('hide')
@@ -132,6 +178,10 @@ function dismiss() {
 
 // Deletes a campaign after prompting the user
 function deleteCampaign() {
+    if (isSampleMode()) {
+        errorFlash("Sample results view is read-only")
+        return
+    }
     Swal.fire({
         title: "Are you sure?",
         text: "This will delete the campaign. This can't be undone!",
@@ -170,6 +220,10 @@ function deleteCampaign() {
 
 // Completes a campaign after prompting the user
 function completeCampaign() {
+    if (isSampleMode()) {
+        errorFlash("Sample results view is read-only")
+        return
+    }
     Swal.fire({
         title: "Are you sure?",
         text: "Gophish will stop processing events for this campaign",
@@ -810,7 +864,7 @@ function applyHistoricalView(triggerFlash) {
     if (state.mode == "range" && state.start) {
         params.start = state.start.clone().utc().toISOString()
     }
-    api.campaignId.rangeStats(campaign.id, params)
+    fetchCampaignRangeStats(params)
         .success(function (response) {
             rangeView.enabled = true
             rangeView.source = state.source
@@ -946,9 +1000,9 @@ function createStatusLabel(status, send_date) {
  * * Datatables
  */
 function poll() {
-    api.campaignId.results(campaign.id)
+    fetchCampaignResults()
         .success(function (c) {
-            campaign = c
+            campaign = normalizeCampaignResponse(c)
             /* Update the datatable */
             resultsTable = $("#resultsTable").DataTable()
             resultsTable.rows().every(function (i, tableLoop, rowLoop) {
@@ -986,20 +1040,21 @@ function poll() {
 }
 
 function load() {
-    campaign.id = window.location.pathname.split('/').slice(-1)[0]
+    campaign.id = isSampleMode() ? "sample" : window.location.pathname.split('/').slice(-1)[0]
     var use_map = JSON.parse(localStorage.getItem('gophish.use_map'))
-    api.campaignId.results(campaign.id)
+    fetchCampaignResults()
         .success(function (c) {
-            campaign = c
+            campaign = normalizeCampaignResponse(c)
 	            if (campaign) {
-	                $("title").text(c.name + " - Gophish")
+	                $("title").text(campaign.name + " - Gophish")
 	                $("#loading").hide()
 	                $("#campaignResults").show()
+                    configureSampleModeUI()
                     initializeRangeControls()
                     setRangeControlDefaults()
 	                // Set the title
-	                $("#page-title").text("Results for " + c.name)
-                if (c.status == "Completed") {
+	                $("#page-title").text("Results for " + campaign.name)
+                if (campaign.status == "Completed") {
                     $('#complete_button')[0].disabled = true;
                     $('#complete_button').text('Completed!');
                     doPoll = false;
@@ -1046,6 +1101,9 @@ function load() {
                                 if (type == "display") {
                                     if (reported) {
                                         return "<i class='fa fa-check-circle text-center text-success'></i>"
+                                    }
+                                    if (isSampleMode()) {
+                                        return "<span class='text-muted'>-</span>"
                                     }
                                     return "<i role='button' class='fa fa-times-circle text-center text-muted' onclick='report_mail(\"" + row[0] + "\", \"" + campaign.id + "\");'></i>"
                                 }
@@ -1132,7 +1190,7 @@ function load() {
         })
         .error(function () {
             $("#loading").hide()
-            errorFlash(" Campaign not found!")
+            errorFlash(isSampleMode() ? " Sample results could not be loaded!" : " Campaign not found!")
         })
 }
 
@@ -1150,6 +1208,10 @@ function refresh() {
 };
 
 function report_mail(rid, cid) {
+    if (isSampleMode()) {
+        errorFlash("Sample results view is read-only")
+        return
+    }
     Swal.fire({
         title: "Are you sure?",
         text: "This result will be flagged as reported (RID: " + rid + ")",

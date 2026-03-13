@@ -130,6 +130,14 @@ var api = {
             return query("/campaigns/" + id + "/summary", "GET", {}, true)
         }
     },
+    campaignSample: {
+        results: function () {
+            return query(window.sampleCampaignResultsAPI, "GET", {}, true)
+        },
+        rangeStats: function (params) {
+            return queryParams(window.sampleCampaignRangeStatsAPI, "GET", params, true)
+        }
+    },
     // groups contains the endpoints for /groups
     groups: {
         // get() - Queries the API for GET /groups
