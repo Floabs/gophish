@@ -832,6 +832,18 @@ function applySelectedView(triggerFlash) {
     applyDashboardView()
 }
 
+function switchToHistoricalView(triggerFlash) {
+    $("#range_view_source").val("actual")
+    syncRangeControls()
+    applyHistoricalView(triggerFlash)
+}
+
+function switchToDashboardView() {
+    $("#range_view_source").val("dashboard")
+    syncRangeControls()
+    applyDashboardView()
+}
+
 function applyDashboardView() {
     rangeView.enabled = false
     rangeView.source = "dashboard"
@@ -933,11 +945,15 @@ function initializeRangeControls() {
     $("#range_apply").on("click", function () {
         applySelectedView()
     })
+    $("#range_use_actual").on("click", function () {
+        switchToHistoricalView()
+    })
+    $("#range_use_dashboard").on("click", function () {
+        switchToDashboardView()
+    })
     $("#range_reset").on("click", function () {
-        $("#range_view_source").val("dashboard")
         $("#range_view_mode").val("snapshot")
-        syncRangeControls()
-        applyDashboardView()
+        switchToDashboardView()
     })
 }
 
