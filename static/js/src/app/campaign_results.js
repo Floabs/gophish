@@ -168,6 +168,7 @@ function configureSampleModeUI() {
     $("#delete_button").hide()
     $("#refresh_btn").hide()
     $("#refresh_message").hide()
+    $("#range_apply").text("Apply Time Filter")
 }
 
 function dismiss() {
@@ -933,7 +934,7 @@ function setRangeControlDefaults() {
     if (!isZeroCampaignDate(campaign.completed_date)) {
         defaultEnd = moment.utc(campaign.completed_date).local()
     }
-    $("#range_view_source").val("dashboard")
+    $("#range_view_source").val(isSampleMode() ? "actual" : "dashboard")
     $("#range_view_mode").val("snapshot")
     $("#range_start_picker").data("DateTimePicker").date(defaultStart)
     $("#range_end_picker").data("DateTimePicker").date(defaultEnd)
@@ -1166,6 +1167,9 @@ function load() {
                             colors: [statuses[status].color, '#dddddd']
                         })
                     })
+                    if (isSampleMode()) {
+                        applyHistoricalView(false)
+                    }
 
 	                if (use_map) {
                     $("#resultsMapContainer").show()
